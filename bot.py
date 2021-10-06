@@ -5,7 +5,6 @@ import redis
 import pymongo
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 from modules.ServerList import ServerList
 from modules.ServerEventHandler import ServerEventHandler
@@ -23,7 +22,6 @@ discordBotCollection = mongoConnection["DiscordBot"]
 serverListPool = redis.ConnectionPool.from_url(os.environ.get('REDIS_URL'), db=0)
 gameInfoPool = redis.ConnectionPool.from_url(os.environ.get('REDIS_URL'), db=2)
 
-load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 client = commands.Bot(command_prefix='!')
