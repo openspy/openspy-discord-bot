@@ -16,10 +16,6 @@ class GuildSettings():
         cache_key = "server_event_{}_{}_{}".format(guild, event_type, gamename)
         self.cacheItems[cache_key] = channel_id
 
-    def DeleteCachedServerEvent(self, guild, event_type, gamename, channel_id):
-        cache_key = "server_event_{}_{}_{}".format(guild, event_type, gamename)
-        del self.cacheItems[cache_key]
-
     def GetServerEventChannel(self, guild, event_type, gamename):
         cache_result = self.GetCachedServerEvent(guild, event_type, gamename)
         if cache_result != None:
@@ -52,7 +48,8 @@ class GuildSettings():
         collection.delete_many(match)
 
     def DeleteChannelGamenameEvents(self, guild, channel_id, gamename):
-        self.DeleteChannelGamenameEvents(guild, channel_id, gamename)
+        self.cacheItems = {} #should scan for partial matches, but oh well
+
         collection = self.dbCtx["server_new_event_channels"]
         match = {"guild": guild.id, "channel": channel_id, "gamename": gamename}
         collection.delete_many(match)
