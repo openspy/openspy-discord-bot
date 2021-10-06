@@ -1,0 +1,6 @@
+py-redis
+pymongo
+dnspython
+discord.py
+dotenv
+aio_pika
