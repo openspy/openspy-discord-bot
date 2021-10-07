@@ -63,7 +63,7 @@ class ServerListingCommands(commands.Cog):
         embedMsg = discord.Embed(title="Server Info",description="Server Values", color=0x0000ff)
         embedMsg.add_field(name="Server Key", value=server_info["server_key"], inline=True)
 
-        if "version" in server_info and int(server_info["version"]) == 2:
+        if "num_probes" in server_info and int(server_info["num_probes"]) > 0:
             ports_forwarded = "allow_unsolicited_udp" in server_info and bool(server_info["allow_unsolicited_udp"])
             embedMsg.add_field(name="Port Forwarded", value=str(ports_forwarded), inline=True)
 

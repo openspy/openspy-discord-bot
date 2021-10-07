@@ -95,4 +95,14 @@ class ServerList():
             if "open_slots" in server_info["custkeys"] and "maxplayers" in server_info["custkeys"]:
                 server_info["custkeys"]["numplayers"] = str(int(server_info["custkeys"]["maxplayers"]) - int(server_info["custkeys"]["open_slots"]))
             del server_info["custkeys"]["session"]
+            if "mode" in server_info["custkeys"]:
+                mode = int(server_info["custkeys"]["mode"])
+                if mode == 3:
+                    server_info["custkeys"]["gamemode"] = "Co-op"
+                else:
+                    ranked = "ranked" in server_info["custkeys"] and int(server_info["custkeys"]["ranked"]) == 1
+                    if ranked:
+                        server_info["custkeys"]["gamemode"] = "Multiplayer (ranked)"
+                    else:
+                        server_info["custkeys"]["gamemode"] = "Multiplayer"
         return server_info
