@@ -8,6 +8,8 @@ class ServerList():
         server_custkeys = {}
         server_player_keys = []
         server_team_keys = []
+        if not serverListCache.exists(server_key):
+            return None
         for hscan_key in serverListCache.hscan_iter(server_key):
             try:
                 key = hscan_key[0].decode('latin-1')
@@ -74,38 +76,35 @@ class ServerList():
         return servers
             
     def handleVariableRemapping(self, server_info):
-        try:
-            if "hostname" not in server_info["custkeys"]:
-                server_info["custkeys"]["hostname"] = "Unknown"
-            if "gamemode" not in server_info["custkeys"]:
-                server_info["custkeys"]["gamemode"] = "Unknown"
-            if "mapname" not in server_info["custkeys"]:
-                server_info["custkeys"]["mapname"] = "Unknown"
+        if "hostname" not in server_info["custkeys"]:
+            server_info["custkeys"]["hostname"] = "Unknown"
+        if "gamemode" not in server_info["custkeys"]:
+            server_info["custkeys"]["gamemode"] = "Unknown"
+        if "mapname" not in server_info["custkeys"]:
+            server_info["custkeys"]["mapname"] = "Unknown"
 
-            if "numplayers" not in server_info["custkeys"]:
-                server_info["custkeys"]["numplayers"] = "-1"
-            if "maxplayers" not in server_info["custkeys"]:
-                server_info["custkeys"]["maxplayers"] = "-1"
+        if "numplayers" not in server_info["custkeys"]:
+            server_info["custkeys"]["numplayers"] = "-1"
+        if "maxplayers" not in server_info["custkeys"]:
+            server_info["custkeys"]["maxplayers"] = "-1"
 
-            gameid = int(server_info["gameid"])
+        gameid = int(server_info["gameid"])
 
-            sr2_gameids = [2108,2109,2110,2112,2174]
-            if gameid in sr2_gameids:
-                if "online_name" in server_info["custkeys"]:
-                    server_info["custkeys"]["hostname"] = server_info["custkeys"]["online_name"]
-                if "open_slots" in server_info["custkeys"] and "maxplayers" in server_info["custkeys"]:
-                    server_info["custkeys"]["numplayers"] = str(int(server_info["custkeys"]["maxplayers"]) - int(server_info["custkeys"]["open_slots"]))
-                del server_info["custkeys"]["session"]
-                if "mode" in server_info["custkeys"]:
-                    mode = int(server_info["custkeys"]["mode"])
-                    if mode == 3:
-                        server_info["custkeys"]["gamemode"] = "Co-op"
+        sr2_gameids = [2108,2109,2110,2112,2174]
+        if gameid in sr2_gameids:
+            if "online_name" in server_info["custkeys"]:
+                server_info["custkeys"]["hostname"] = server_info["custkeys"]["online_name"]
+            if "open_slots" in server_info["custkeys"] and "maxplayers" in server_info["custkeys"]:
+                server_info["custkeys"]["numplayers"] = str(int(server_info["custkeys"]["maxplayers"]) - int(server_info["custkeys"]["open_slots"]))
+            del server_info["custkeys"]["session"]
+            if "mode" in server_info["custkeys"]:
+                mode = int(server_info["custkeys"]["mode"])
+                if mode == 3:
+                    server_info["custkeys"]["gamemode"] = "Co-op"
+                else:
+                    ranked = "ranked" in server_info["custkeys"] and int(server_info["custkeys"]["ranked"]) == 1
+                    if ranked:
+                        server_info["custkeys"]["gamemode"] = "Multiplayer (ranked)"
                     else:
-                        ranked = "ranked" in server_info["custkeys"] and int(server_info["custkeys"]["ranked"]) == 1
-                        if ranked:
-                            server_info["custkeys"]["gamemode"] = "Multiplayer (ranked)"
-                        else:
-                            server_info["custkeys"]["gamemode"] = "Multiplayer"
-        except:
-            pass
+                        server_info["custkeys"]["gamemode"] = "Multiplayer"
         return server_info
