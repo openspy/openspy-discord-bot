@@ -57,7 +57,7 @@ async def on_ready():
 
     
 
-client.add_cog(ServerListingCommands(client, serverList, serverListPool))
+client.add_cog(ServerListingCommands(client, serverList, serverListPool, gameInfo))
 client.add_cog(ServerListingEventConfigCommands(client, guildSettings))
 
 client.run(TOKEN)

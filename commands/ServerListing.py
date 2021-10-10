@@ -4,9 +4,11 @@ from discord.ext import commands
 class ServerListingCommands(commands.Cog):
     serverListHelper = None
     serverListPool = None
-    def __init__(self, bot, serverListHelper, serverListPool):
+    gameInfo = None
+    def __init__(self, bot, serverListHelper, serverListPool, gameInfo):
         self.serverListHelper = serverListHelper
         self.serverListPool = serverListPool
+        self.gameInfo = gameInfo
         self.bot = bot
     
     def embedServer(self, server_info, embedMsg, field_index):
@@ -25,6 +27,10 @@ class ServerListingCommands(commands.Cog):
 
     @commands.command()
     async def servers(self, ctx, gamename):
+        if not self.gameInfo.GamenameExists(gamename):
+            await ctx.send("Gamename **{}** does not exist.".format(gamename))
+            return
+
         servers = self.serverListHelper.FetchServerList(gamename)
 
         desc = "Server Info - {} - Total servers: {}\n".format(gamename, len(servers))

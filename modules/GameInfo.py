@@ -17,3 +17,6 @@ class GameInfo():
         game_info["description"] = gameInfoCache.hget(game_key, "description").decode('utf8')
         game_info["queryport"] = gameInfoCache.hget(game_key, "queryport").decode('utf8')
         return game_info
+    def GamenameExists(self, gamename):
+        gameInfoCache = redis.Redis(connection_pool=self.gameInfoPool)
+        return gameInfoCache.exists(gamename)
