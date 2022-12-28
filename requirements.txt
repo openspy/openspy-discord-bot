@@ -2,5 +2,5 @@ py-redis
 pymongo
 dnspython
 discord.py
-dotenv
+python-dotenv
 aio_pika
