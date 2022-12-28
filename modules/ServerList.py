@@ -12,27 +12,27 @@ class ServerList():
             return None
         for hscan_key in serverListCache.hscan_iter(server_key):
             try:
-                key = hscan_key[0].decode('latin-1')
-                value = hscan_key[1].decode('latin-1')
+                key = hscan_key[0].decode('utf8', 'replace')
+                value = hscan_key[1].decode('utf8', 'replace')
                 server_info[key] = value
             except:
                 pass
 
         for hscan_key in serverListCache.hscan_iter(server_key + "custkeys"):
             try:
-                key = hscan_key[0].decode('latin-1')
-                value = hscan_key[1].decode('latin-1')
+                key = hscan_key[0].decode('utf8', 'replace')
+                value = hscan_key[1].decode('utf8', 'replace')
                 server_custkeys[key] = value
             except:
                 pass
 
         for player_key in serverListCache.scan_iter(server_key + "custkeys_player_*"):
             try:
-                key = player_key.decode('latin-1')
+                key = player_key.decode('utf8', 'replace')
                 player_keys = {}
                 for hscan_key in serverListCache.hscan_iter(key):
-                    player_hkey = hscan_key[0].decode('latin-1')
-                    player_hvalue = hscan_key[1].decode('latin-1')
+                    player_hkey = hscan_key[0].decode('utf8', 'replace')
+                    player_hvalue = hscan_key[1].decode('utf8', 'replace')
                     player_keys[player_hkey] = player_hvalue
                 server_player_keys.append(player_keys)
             except:
@@ -40,11 +40,11 @@ class ServerList():
 
         for team_key in serverListCache.scan_iter(server_key + "custkeys_team_*"):
             try:
-                key = team_key.decode('latin-1')
+                key = team_key.decode('utf8', 'replace')
                 team_keys = {}
                 for hscan_key in serverListCache.hscan_iter(key):
-                    team_hkey = hscan_key[0].decode('latin-1')
-                    team_hvalue = hscan_key[1].decode('latin-1')
+                    team_hkey = hscan_key[0].decode('utf8', 'replace')
+                    team_hvalue = hscan_key[1].decode('utf8', 'replace')
                     team_keys[team_hkey] = team_hvalue
                 server_team_keys.append(team_keys)
             except:
