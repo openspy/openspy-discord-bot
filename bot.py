@@ -4,7 +4,6 @@ import redis
 
 import pymongo
 import discord
-from discord.ext import commands
 
 from modules.ServerList import ServerList
 from modules.ServerEventHandler import ServerEventHandler
@@ -24,7 +23,7 @@ gameInfoPool = redis.ConnectionPool.from_url(os.environ.get('REDIS_URL'), db=2)
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-client = commands.Bot(command_prefix='!')
+client = discord.ext.commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
 gameInfo = GameInfo(gameInfoPool)
 serverList = ServerList(serverListPool)
@@ -52,13 +51,12 @@ async def on_ready():
     # Declaring queue
     queue = await channel.declare_queue(exclusive=True)
     await queue.bind("openspy.master", routing_key="server.event")
-    
+
     await queue.consume(server_event_callback, no_ack=True)
 
-    
+async def reg_commands():
+    await client.add_cog(ServerListingCommands(client, serverList, serverListPool, gameInfo))
+    await client.add_cog(ServerListingEventConfigCommands(client, guildSettings))
 
-client.add_cog(ServerListingCommands(client, serverList, serverListPool, gameInfo))
-client.add_cog(ServerListingEventConfigCommands(client, guildSettings))
-
+asyncio.run(reg_commands())
 client.run(TOKEN)
-
