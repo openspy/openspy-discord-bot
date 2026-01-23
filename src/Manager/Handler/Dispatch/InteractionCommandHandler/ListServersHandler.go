@@ -95,7 +95,7 @@ func (h *ListServersHandler) HandleCommand(ctx context.Context, redisClient *red
 		var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
 		field.Inline = &True
 		field.Name = "Server Key"
-		field.Value = ":" + gamename + ":" + backendId
+		field.Value = gamename + ":" + backendId + ":"
 		if strings.Contains(backendId, "ut2004") { //temporarily skip injected servers until key bug is fixed
 			field.Value = backendId
 		}
