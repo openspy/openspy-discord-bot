@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const MAX_TOTAL_LEN int = 5500
+
 const (
 	INTERACTION_TYPE_PING                             int = 1
 	INTERACTION_TYPE_APPLICATION_COMMAND                  = 2

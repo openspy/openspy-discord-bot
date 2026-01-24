@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"os"
 )
 
 const (
@@ -31,6 +32,18 @@ func SendInteractionCallback(interactionId string, interactionToken string, msg 
 	jsonBytes, _ := json.Marshal(&msg)
 	requestBody := bytes.NewBuffer(jsonBytes)
 	req, _ := http.NewRequest("POST", url, requestBody)
+	req.Header.Add("Content-Type", "application/json")
+
+	client := GetHttpClient()
+
+	client.Do(req)
+}
+func EditOriginalInteractionResponse(interactionId string, interactionToken string, msg InteractionCallback) {
+	var appId = os.Getenv("CLIENT_ID")
+	var url = API_BASE_URL + "/webhooks/" + appId + "/" + interactionToken + "/messages/@original"
+	jsonBytes, _ := json.Marshal(&msg.Data)
+	requestBody := bytes.NewBuffer(jsonBytes)
+	req, _ := http.NewRequest("PATCH", url, requestBody)
 	req.Header.Add("Content-Type", "application/json")
 
 	client := GetHttpClient()
