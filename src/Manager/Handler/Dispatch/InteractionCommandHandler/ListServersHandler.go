@@ -20,7 +20,7 @@ func (h *ListServersHandler) HandleCommand(ctx context.Context, redisClient *red
 	var gamename = data.Options[0].Value //validate, error out if no such game exists, etc
 	if exists, _ := redisClient.Exists(ctx, gamename).Result(); exists == 0 {
 		h.SendNoSuchGamename(interaction)
-		return //XXX: SEND DOESN"T EXIST
+		return
 	}
 
 	var cb DiscordApi.InteractionCallback
@@ -69,13 +69,11 @@ func (h *ListServersHandler) HandleCommand(ctx context.Context, redisClient *red
 
 	var total_length int = 0
 
-	const MAX_TOTAL_LEN int = 5500
-
 	for i := 0; i < len(redisCmds); i += 2 {
 		keys, _ := redisCmds[i].Result()
 		custkeys, _ := redisCmds[i+1].Result()
 
-		if total_length > MAX_TOTAL_LEN {
+		if total_length > DiscordApi.MAX_TOTAL_LEN {
 			break
 		}
 		if keys[0] == nil {
@@ -147,7 +145,7 @@ func (h *ListServersHandler) HandleCommand(ctx context.Context, redisClient *red
 			embed.Title = "Server List - Page " + strconv.Itoa(page)
 			embed.Description = "Server List - " + gamename + " - Page " + strconv.Itoa(page)
 		}
-		if len(cb.Data.Embeds) >= 10 || total_length > MAX_TOTAL_LEN {
+		if len(cb.Data.Embeds) >= 10 || total_length > DiscordApi.MAX_TOTAL_LEN {
 			break
 		}
 	}
@@ -155,7 +153,7 @@ func (h *ListServersHandler) HandleCommand(ctx context.Context, redisClient *red
 	if !isFieldClean {
 		cb.Data.Embeds = append(cb.Data.Embeds, *embed)
 	}
-	DiscordApi.SendInteractionCallback(interaction.Id, interaction.Token, cb)
+	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
 
 }
 
@@ -164,7 +162,7 @@ func (h *ListServersHandler) SendNoSuchGamename(interaction *DispatchEvents.Inte
 	cb.Data = &DiscordApi.InteractionCallbackData{}
 	cb.Data.Content = "No servers found, or game doesn't exist."
 	cb.Type = 4
-	DiscordApi.SendInteractionCallback(interaction.Id, interaction.Token, cb)
+	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
 }
 
 func (h *ListServersHandler) simpleStringConvert(obj interface{}) string {

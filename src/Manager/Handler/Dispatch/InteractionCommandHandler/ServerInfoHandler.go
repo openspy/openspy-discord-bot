@@ -16,7 +16,6 @@ func (h *ServerInfoHandler) HandleCommand(ctx context.Context, redisClient *redi
 	//handle interaction create event
 	var cb DiscordApi.InteractionCallback
 	cb.Type = 4
-	cb.Type = 4
 	cb.Data = &DiscordApi.InteractionCallbackData{}
 	cb.Data.Embeds = make([]DiscordApi.Embed, 0)
 
@@ -44,8 +43,6 @@ func (h *ServerInfoHandler) HandleCommand(ctx context.Context, redisClient *redi
 	var isFieldClean bool = true
 
 	var total_length int = 0
-
-	const MAX_TOTAL_LEN int = 5500
 
 	basicInfo, _ := redisClient.HMGet(ctx, serverId, "allow_unsolicited_udp", "country").Result()
 
@@ -98,21 +95,151 @@ func (h *ServerInfoHandler) HandleCommand(ctx context.Context, redisClient *redi
 			cb.Data.Embeds = append(cb.Data.Embeds, *embed)
 			embed.Fields = make([]DiscordApi.EmbedField, 0)
 		}
-		if len(cb.Data.Embeds) >= 10 || total_length > MAX_TOTAL_LEN {
+		if len(cb.Data.Embeds) >= 10 || total_length > DiscordApi.MAX_TOTAL_LEN {
 			break
 		}
 	}
 	if !isFieldClean {
 		cb.Data.Embeds = append(cb.Data.Embeds, *embed)
 	}
-	DiscordApi.SendInteractionCallback(interaction.Id, interaction.Token, cb)
+
+	total_length = h.appendTeamKeys(ctx, redisClient, serverId, &cb, total_length)
+	total_length = h.appendPlayerKeys(ctx, redisClient, serverId, &cb, total_length)
+
+	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
+}
+func (h *ServerInfoHandler) appendPlayerKeys(ctx context.Context, redisClient *redis.Client, serverId string, cb *DiscordApi.InteractionCallback, total_length int) int {
+	var needExit bool = false
+	var isFieldClean bool = true
+
+	var embed *DiscordApi.Embed = &DiscordApi.Embed{}
+	var col int = 0x0000ff
+	embed.Color = &col
+	embed.Title = "Server Info - Players"
+	embed.Description = "Player Values"
+
+	var cursor uint64 = 0
+
+	var True bool = true
+	var False bool = false
+
+	for {
+		playerKeys, nextCursor, _ := redisClient.Scan(ctx, cursor, serverId+"custkeys_player_*", 50).Result()
+		cursor = nextCursor
+		for _, playerKey := range playerKeys {
+			var indexString = playerKey[len(serverId)+16:]
+			var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
+			field.Inline = &False
+
+			field.Name = "Player Index"
+			field.Value = indexString
+			total_length = total_length + len(field.Name) + len(field.Value)
+			embed.Fields = append(embed.Fields, *field)
+
+			allKeys, _ := redisClient.HGetAll(ctx, playerKey).Result()
+			for key, value := range allKeys {
+				var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
+				field.Inline = &True
+				field.Name = key
+				field.Value = value
+				total_length = total_length + len(field.Name) + len(field.Value)
+				embed.Fields = append(embed.Fields, *field)
+				isFieldClean = false
+
+				if len(embed.Fields) >= 24 {
+					isFieldClean = true
+					total_length = total_length + len(field.Name) + len(field.Value)
+					total_length = total_length + len(embed.Title) + len(embed.Description) + len(embed.Url)
+					cb.Data.Embeds = append(cb.Data.Embeds, *embed)
+					embed.Fields = make([]DiscordApi.EmbedField, 0)
+				}
+				if len(cb.Data.Embeds) >= 10 || total_length > DiscordApi.MAX_TOTAL_LEN {
+					needExit = true
+					break
+				}
+			}
+		}
+		if cursor == 0 || needExit {
+			break
+		}
+	}
+
+	if !isFieldClean {
+		cb.Data.Embeds = append(cb.Data.Embeds, *embed)
+		isFieldClean = true
+	}
+
+	return total_length
+}
+func (h *ServerInfoHandler) appendTeamKeys(ctx context.Context, redisClient *redis.Client, serverId string, cb *DiscordApi.InteractionCallback, total_length int) int {
+	var needExit bool = false
+	var isFieldClean bool = true
+
+	var embed *DiscordApi.Embed = &DiscordApi.Embed{}
+	var col int = 0x0000ff
+	embed.Color = &col
+	embed.Title = "Server Info - Teams"
+	embed.Description = "Team Values"
+
+	var cursor uint64 = 0
+
+	var True bool = true
+	var False bool = false
+
+	for {
+		playerKeys, nextCursor, _ := redisClient.Scan(ctx, cursor, serverId+"custkeys_team_*", 50).Result()
+		cursor = nextCursor
+		for _, playerKey := range playerKeys {
+			var indexString = playerKey[len(serverId)+14:]
+			var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
+			field.Inline = &False
+
+			field.Name = "Player Index"
+			field.Value = indexString
+			total_length = total_length + len(field.Name) + len(field.Value)
+			embed.Fields = append(embed.Fields, *field)
+
+			allKeys, _ := redisClient.HGetAll(ctx, playerKey).Result()
+			for key, value := range allKeys {
+				var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
+				field.Inline = &True
+				field.Name = key
+				field.Value = value
+				total_length = total_length + len(field.Name) + len(field.Value)
+				embed.Fields = append(embed.Fields, *field)
+				isFieldClean = false
+
+				if len(embed.Fields) >= 24 {
+					isFieldClean = true
+					total_length = total_length + len(field.Name) + len(field.Value)
+					total_length = total_length + len(embed.Title) + len(embed.Description) + len(embed.Url)
+					cb.Data.Embeds = append(cb.Data.Embeds, *embed)
+					embed.Fields = make([]DiscordApi.EmbedField, 0)
+				}
+				if len(cb.Data.Embeds) >= 10 || total_length > DiscordApi.MAX_TOTAL_LEN {
+					needExit = true
+					break
+				}
+			}
+		}
+		if cursor == 0 || needExit {
+			break
+		}
+	}
+
+	if !isFieldClean {
+		cb.Data.Embeds = append(cb.Data.Embeds, *embed)
+		isFieldClean = true
+	}
+
+	return total_length
 }
 func (h *ServerInfoHandler) SendNoSuchServer(interaction *DispatchEvents.InteractionCreateEvent) {
 	var cb DiscordApi.InteractionCallback
 	cb.Data = &DiscordApi.InteractionCallbackData{}
 	cb.Data.Content = "Server id not found"
 	cb.Type = 4
-	DiscordApi.SendInteractionCallback(interaction.Id, interaction.Token, cb)
+	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
 }
 
 func (h *ServerInfoHandler) simpleStringConvert(obj interface{}) string {

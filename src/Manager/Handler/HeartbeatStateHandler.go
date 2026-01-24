@@ -59,7 +59,7 @@ func (h *HeartbeatStateHandler) sendIdentity() {
 	msg.Op = Message.IDENTIFY_EVENT
 	var data Message.IdentifyEvent
 	data.Token = os.Getenv("BOT_TOKEN")
-	data.Intents = 53608444
+	data.Intents = 0
 
 	var props Message.IdentifyProperties
 	props.Browser = "openspy"

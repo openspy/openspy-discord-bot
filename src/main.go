@@ -159,7 +159,7 @@ func installCommands(apiKey string) {
 	opt.Description = "Server ID"
 	opt.Type = 3
 	opt.Required = true
-	opt.MinLength = 3
+	opt.MinLength = 2
 	opt.MaxLength = 48
 	cmd.Options = append(cmd.Options, *opt)
 
