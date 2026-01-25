@@ -67,6 +67,8 @@ func main() {
 
 	gatewayBotInfo := DiscordApi.GetGatewayBot()
 
+	DiscordApi.ResumeGatewayUrl = gatewayBotInfo.Url
+
 	var sm Manager.StateManager
 	sm.SetAddress(gatewayBotInfo.Url)
 	sm.SetDialer(dialer)
