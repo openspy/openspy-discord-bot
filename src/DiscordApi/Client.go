@@ -26,19 +26,31 @@ const (
 	API_BASE_URL string = "https://discord.com/api/v10"
 )
 
+var ApiProxy *string
+
 type DiscordRequest struct {
 	Type int         `json:"type"`
 	Data interface{} `json:"data"`
 }
 
 func GetHttpClient() *http.Client {
-	proxyUrl, _ := url.Parse("http://localhost:7777")
-	tr := &http.Transport{
-		MaxIdleConns:       10,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
-		Proxy:              http.ProxyURL(proxyUrl),
-		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
+	var tr *http.Transport
+	if ApiProxy != nil && len(*ApiProxy) > 0 {
+		proxyUrl, _ := url.Parse(*ApiProxy)
+		tr = &http.Transport{
+			MaxIdleConns:       10,
+			IdleConnTimeout:    30 * time.Second,
+			DisableCompression: true,
+			Proxy:              http.ProxyURL(proxyUrl),
+			TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
+		}
+	} else {
+		tr = &http.Transport{
+			MaxIdleConns:       10,
+			IdleConnTimeout:    30 * time.Second,
+			DisableCompression: true,
+		}
 	}
+
 	return &http.Client{Transport: tr}
 }

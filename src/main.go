@@ -29,6 +29,8 @@ func main() {
 	flag.Parse()
 	signal.Notify(signalChan, os.Interrupt)
 
+	DiscordApi.ApiProxy = proxy
+
 	if *installMode == true {
 		log.Println("got install mode")
 		var oauthToken = DiscordApi.GetOAuthToken()
