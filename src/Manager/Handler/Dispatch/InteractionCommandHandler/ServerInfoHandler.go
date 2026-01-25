@@ -35,7 +35,7 @@ func (h *ServerInfoHandler) HandleCommand(ctx context.Context, redisClient *redi
 	var embed *DiscordApi.Embed = &DiscordApi.Embed{}
 	var col int = 0x0000ff
 	embed.Color = &col
-	embed.Title = "Server Info " + serverId
+	embed.Title = "Server Info"
 	embed.Description = "Server Info for: " + serverId
 
 	fetchPipeline := redisClient.Pipeline()
