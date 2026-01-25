@@ -2,6 +2,7 @@ package InteractionCommandHandler
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -37,14 +38,25 @@ func (h *ServerInfoHandler) HandleCommand(ctx context.Context, redisClient *redi
 	embed.Title = "Server Info " + serverId
 	embed.Description = "Server Info for: " + serverId
 
-	keys, _ := redisClient.HGetAll(ctx, serverId+"custkeys").Result()
+	fetchPipeline := redisClient.Pipeline()
+
+	getAllReq := fetchPipeline.HGetAll(ctx, serverId+"custkeys")
+	basicInfoReq := fetchPipeline.HMGet(ctx, serverId, "allow_unsolicited_udp", "country")
+	_, redisErr := fetchPipeline.Exec(ctx)
+	if redisErr != nil {
+		h.SendError(interaction)
+		log.Println(redisErr.Error())
+		return
+	}
+
+	keys, _ := getAllReq.Result()
 
 	var True bool = true
 	var isFieldClean bool = true
 
 	var total_length int = 0
 
-	basicInfo, _ := redisClient.HMGet(ctx, serverId, "allow_unsolicited_udp", "country").Result()
+	basicInfo, _ := basicInfoReq.Result()
 
 	var portsForwarded bool = basicInfo[0] != nil && basicInfo[0].(string) == "1"
 	var country = h.simpleStringConvert(basicInfo[1])
@@ -125,9 +137,21 @@ func (h *ServerInfoHandler) appendPlayerKeys(ctx context.Context, redisClient *r
 
 	for {
 		playerKeys, nextCursor, _ := redisClient.Scan(ctx, cursor, serverId+"custkeys_player_*", 50).Result()
+		const TEAM_STRING_OFFSET int = 16 //strlen of custkeys_player_
 		cursor = nextCursor
+
+		fetchPipeline := redisClient.Pipeline()
+		redisCmds := []*redis.MapStringStringCmd{}
 		for _, playerKey := range playerKeys {
-			var indexString = playerKey[len(serverId)+16:]
+			redisCmds = append(redisCmds, fetchPipeline.HGetAll(ctx, playerKey))
+		}
+		_, fetchErr := fetchPipeline.Exec(ctx)
+		if fetchErr != nil {
+			log.Println("player key error: " + fetchErr.Error())
+			break
+		}
+		for idx, playerKey := range playerKeys {
+			var indexString = playerKey[len(serverId)+TEAM_STRING_OFFSET:]
 			var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
 			field.Inline = &False
 
@@ -136,7 +160,11 @@ func (h *ServerInfoHandler) appendPlayerKeys(ctx context.Context, redisClient *r
 			total_length = total_length + len(field.Name) + len(field.Value)
 			embed.Fields = append(embed.Fields, *field)
 
-			allKeys, _ := redisClient.HGetAll(ctx, playerKey).Result()
+			allKeys, allKeyErr := redisCmds[idx].Result()
+			if allKeyErr != nil {
+				log.Println("team key error: " + allKeyErr.Error())
+				break
+			}
 			for key, value := range allKeys {
 				var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
 				field.Inline = &True
@@ -157,6 +185,9 @@ func (h *ServerInfoHandler) appendPlayerKeys(ctx context.Context, redisClient *r
 					needExit = true
 					break
 				}
+			}
+			if needExit {
+				break
 			}
 		}
 		if cursor == 0 || needExit {
@@ -188,18 +219,34 @@ func (h *ServerInfoHandler) appendTeamKeys(ctx context.Context, redisClient *red
 
 	for {
 		playerKeys, nextCursor, _ := redisClient.Scan(ctx, cursor, serverId+"custkeys_team_*", 50).Result()
+		const TEAM_STRING_OFFSET int = 14 //strlen of custkeys_team_
 		cursor = nextCursor
+
+		fetchPipeline := redisClient.Pipeline()
+		redisCmds := []*redis.MapStringStringCmd{}
 		for _, playerKey := range playerKeys {
-			var indexString = playerKey[len(serverId)+14:]
+			redisCmds = append(redisCmds, fetchPipeline.HGetAll(ctx, playerKey))
+		}
+		_, fetchErr := fetchPipeline.Exec(ctx)
+		if fetchErr != nil {
+			log.Println("team key error: " + fetchErr.Error())
+			break
+		}
+		for idx, playerKey := range playerKeys {
+			var indexString = playerKey[len(serverId)+TEAM_STRING_OFFSET:]
 			var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
 			field.Inline = &False
 
-			field.Name = "Player Index"
+			field.Name = "Team Index"
 			field.Value = indexString
 			total_length = total_length + len(field.Name) + len(field.Value)
 			embed.Fields = append(embed.Fields, *field)
 
-			allKeys, _ := redisClient.HGetAll(ctx, playerKey).Result()
+			allKeys, allKeyErr := redisCmds[idx].Result()
+			if allKeyErr != nil {
+				log.Println("team key error: " + allKeyErr.Error())
+				break
+			}
 			for key, value := range allKeys {
 				var field *DiscordApi.EmbedField = &DiscordApi.EmbedField{}
 				field.Inline = &True
@@ -221,6 +268,9 @@ func (h *ServerInfoHandler) appendTeamKeys(ctx context.Context, redisClient *red
 					break
 				}
 			}
+			if needExit {
+				break
+			}
 		}
 		if cursor == 0 || needExit {
 			break
@@ -238,6 +288,14 @@ func (h *ServerInfoHandler) SendNoSuchServer(interaction *DispatchEvents.Interac
 	var cb DiscordApi.InteractionCallback
 	cb.Data = &DiscordApi.InteractionCallbackData{}
 	cb.Data.Content = "Server id not found"
+	cb.Type = 4
+	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
+}
+
+func (h *ServerInfoHandler) SendError(interaction *DispatchEvents.InteractionCreateEvent) {
+	var cb DiscordApi.InteractionCallback
+	cb.Data = &DiscordApi.InteractionCallbackData{}
+	cb.Data.Content = "Request failed, error occured"
 	cb.Type = 4
 	DiscordApi.EditOriginalInteractionResponse(interaction.Id, interaction.Token, cb)
 }
