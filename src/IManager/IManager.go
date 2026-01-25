@@ -3,13 +3,12 @@ package IManager
 import "openspy.net/discord-gateway-bot/Message"
 
 const (
-	STATE_ESTABLISH int = 1
-	STATE_HEARTBEAT int = 3
+	STATE_ESTABLISH = iota
+	STATE_HEARTBEAT
+	STATE_RECONNECT
 )
 
 type IManager interface {
-	SetTickerInterval(interval int)
-	GetTickerInterval() int
 	WriteMessage(event Message.Event)
 	SetState(state int)
 	GetDispatchChannel() chan Message.Event
