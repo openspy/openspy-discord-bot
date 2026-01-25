@@ -144,6 +144,7 @@ func installCommands(apiKey string) {
 	cmd.Name = "listservers"
 	cmd.Description = "Lists game servers for a given game"
 	cmd.Type = 1
+	cmd.DefaultMemberPermissions = (1 << 31) // USE_APPLICATION_COMMANDS
 
 	var opt = &DiscordApi.CreateCommandOption{}
 	opt.Name = "gamename"
@@ -160,6 +161,7 @@ func installCommands(apiKey string) {
 	cmd.Name = "serverinfo"
 	cmd.Description = "Lists game servers for a given game"
 	cmd.Type = 1
+	cmd.DefaultMemberPermissions = (1 << 31)
 
 	opt = &DiscordApi.CreateCommandOption{}
 	opt.Name = "id"
