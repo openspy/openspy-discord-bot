@@ -8,4 +8,5 @@ import (
 type StateHandler interface {
 	HandleMessage(msg Message.Event)
 	SetManager(manager IManager.IManager)
+	Tick()
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"openspy.net/discord-gateway-bot/DiscordApi"
 	"openspy.net/discord-gateway-bot/IManager"
 	"openspy.net/discord-gateway-bot/Message"
 )
@@ -12,6 +13,8 @@ type HeartbeatStateHandler struct {
 	manager      IManager.IManager
 	isRunning    bool
 	sentIdentity bool
+
+	lastHeartbeat time.Time
 }
 
 func (h *HeartbeatStateHandler) SetManager(manager IManager.IManager) {
@@ -20,13 +23,12 @@ func (h *HeartbeatStateHandler) SetManager(manager IManager.IManager) {
 	h.sentIdentity = false
 
 	h.sendHeartbeat()
-
-	go h.ticker()
 }
 func (h *HeartbeatStateHandler) HandleMessage(msg Message.Event) {
 	// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-structure -> RESPOND
 
 	switch msg.Op {
+
 	case Message.HEARTBEAT_ACK:
 		if !h.sentIdentity {
 			h.sendIdentity()
@@ -38,17 +40,20 @@ func (h *HeartbeatStateHandler) HandleMessage(msg Message.Event) {
 	}
 }
 func (h *HeartbeatStateHandler) sendHeartbeat() {
+	h.lastHeartbeat = time.Now()
 	var msg Message.Event
 	msg.Op = Message.HEARTBEAT_EVENT
 	h.manager.WriteMessage(msg)
 }
-func (h *HeartbeatStateHandler) ticker() {
-	var duration = time.Duration(h.manager.GetTickerInterval())
-	ticker := time.NewTicker(duration * time.Millisecond)
-	for _ = range ticker.C {
-		var msg Message.Event
-		msg.Op = Message.HEARTBEAT_EVENT
-		h.manager.WriteMessage(msg)
+func (h *HeartbeatStateHandler) Tick() {
+	now := time.Now()
+
+	diff := now.Sub(h.lastHeartbeat)
+
+	var hbDuration = time.Duration(DiscordApi.HeartbeatInterval * int(time.Millisecond))
+
+	if diff > hbDuration {
+		h.sendHeartbeat()
 	}
 }
 

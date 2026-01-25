@@ -9,6 +9,11 @@ import (
 
 const MAX_TOTAL_LEN int = 5500
 
+var SessionId string
+var ResumeGatewayUrl string
+var LastSeqId int
+var HeartbeatInterval int
+
 const (
 	INTERACTION_TYPE_PING                             int = 1
 	INTERACTION_TYPE_APPLICATION_COMMAND                  = 2

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
@@ -20,7 +21,6 @@ import (
 	"openspy.net/discord-gateway-bot/Message/DispatchEvents"
 )
 
-var addr = flag.String("addr", "wss://gateway.discord.gg/?v=10&encoding=json", "http service address")
 var proxy = flag.String("proxy", "", "http proxy address")
 var installMode = flag.Bool("install", false, "Setup / Install bot")
 
@@ -65,10 +65,13 @@ func main() {
 
 	dispatchChan := make(chan Message.Event, 256)
 
+	gatewayBotInfo := DiscordApi.GetGatewayBot()
+
 	var sm Manager.StateManager
-	sm.SetAddress(*addr)
+	sm.SetAddress(gatewayBotInfo.Url)
 	sm.SetDialer(dialer)
 	sm.SetDispatchChannel(dispatchChan)
+	sm.SetTickerInterval(500 * time.Millisecond)
 	sm.Start()
 
 	var isRunning bool = true
@@ -169,6 +172,8 @@ func installCommands(apiKey string) {
 func handleDispatch(ctx context.Context, client *redis.Client, msg Message.Event) {
 	var dispatch Dispatch.IDispatch = nil
 	switch msg.Type {
+	case DispatchEvents.READY:
+		dispatch = &Dispatch.ReadyEventDispatchHandler{}
 	case DispatchEvents.INTERACTION_CREATE:
 		dispatch = &Dispatch.InteractionCreateDispatchHandler{}
 	}
