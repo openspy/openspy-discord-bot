@@ -127,6 +127,9 @@ func (s *StateManager) handleReadError(err error) {
 	}
 }
 func (s *StateManager) isReconnectError(code int) bool {
+	if code < 4000 {
+		return true
+	}
 	switch code {
 	case 4000:
 		fallthrough
