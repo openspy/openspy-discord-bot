@@ -27,7 +27,7 @@ func (h *ReconnectStateHandler) HandleMessage(msg Message.Event) {
 		h.manager.GetDispatchChannel() <- msg
 		return
 	}
-	log.Panic("got unexpected event")
+	log.Panicf("got unexpected event: %v", msg)
 }
 
 func (h *ReconnectStateHandler) Tick() {
