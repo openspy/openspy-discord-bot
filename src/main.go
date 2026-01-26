@@ -159,7 +159,7 @@ func installCommands(apiKey string) {
 
 	cmd = &DiscordApi.CreateCommandMessage{}
 	cmd.Name = "serverinfo"
-	cmd.Description = "Lists game servers for a given game"
+	cmd.Description = "Get game info for a given server"
 	cmd.Type = 1
 	cmd.DefaultMemberPermissions = (1 << 31)
 
