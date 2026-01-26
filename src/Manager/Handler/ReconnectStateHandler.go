@@ -26,6 +26,10 @@ func (h *ReconnectStateHandler) HandleMessage(msg Message.Event) {
 		}
 		h.manager.GetDispatchChannel() <- msg
 		return
+	} else if msg.Op == Message.HELLO_EVENT {
+		var data *Message.HelloEvent = msg.Data.(*Message.HelloEvent)
+		DiscordApi.HeartbeatInterval = data.HeartbeatInterval
+		return
 	}
 	log.Panicf("got unexpected event: %v", msg)
 }
